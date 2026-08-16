@@ -8,6 +8,20 @@ import pandas as pd
 
 from api.models import EstimateModel, LineItemModel
 
+# Leading characters Excel/LibreOffice interpret as the start of a formula. Text that
+# reaches the export originates from uploaded BOQ files, so a crafted description like
+# "=cmd|..." would otherwise execute when the exported sheet is opened (CSV injection).
+_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _sanitize_cell(value: str | None) -> str:
+    """Neutralize spreadsheet formula injection by prefixing risky cells with `'`."""
+    if not value:
+        return ""
+    if value.startswith(_FORMULA_PREFIXES):
+        return "'" + value
+    return value
+
 
 class EstimateExporterService:
     """Exports structured estimates into client-ready Excel and CSV files."""
@@ -22,17 +36,17 @@ class EstimateExporterService:
 
             rows.append(
                 {
-                    "Item Code": item.item_code,
-                    "Description": item.item_description,
-                    "Spec Section": item.matched_spec_section or "",
+                    "Item Code": _sanitize_cell(item.item_code),
+                    "Description": _sanitize_cell(item.item_description),
+                    "Spec Section": _sanitize_cell(item.matched_spec_section),
                     "Quantity": item.quantity,
-                    "UOM": item.unit_of_measure,
+                    "UOM": _sanitize_cell(item.unit_of_measure),
                     "Low Price ($)": item.unit_price_low,
                     "Unit Price ($)": unit_price,
                     "High Price ($)": item.unit_price_high,
                     "Extended Total ($)": ext_cost,
                     "Is Overridden": "Yes" if item.is_overridden else "No",
-                    "Justification": item.justification_text or "",
+                    "Justification": _sanitize_cell(item.justification_text),
                 }
             )
 

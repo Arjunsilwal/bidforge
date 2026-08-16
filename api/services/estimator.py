@@ -3,6 +3,7 @@ Estimate Assembler & Prediction Service.
 Runs trained Quantile Cost Models and synthesizes defensible line justifications.
 """
 
+import logging
 import os
 
 import pandas as pd
@@ -12,6 +13,8 @@ from api.services.rag import RAGGroundingService
 from data.fred_client import FredPriceIndexClient
 from data.schemas import CanonicalLineItem
 from ml.train import QuantileCostModelTrainer
+
+logger = logging.getLogger(__name__)
 
 
 class EstimatorService:
@@ -27,7 +30,7 @@ class EstimatorService:
             try:
                 self.model_trainer = QuantileCostModelTrainer.load(models_dir)
             except Exception as e:
-                print(f"Warning: Could not load trained models from {models_dir}: {e}")
+                logger.warning("Could not load trained models from %s: %s", models_dir, e)
 
     def generate_estimate(
         self,

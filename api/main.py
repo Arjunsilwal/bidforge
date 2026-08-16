@@ -28,10 +28,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configure CORS
+# Configure CORS. Only the origins listed in ALLOWED_ORIGINS are accepted — never a
+# "*" wildcard, which browsers would otherwise pair with allow_credentials and expose
+# authenticated responses to any site.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins if settings.cors_origins else ["*"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

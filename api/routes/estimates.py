@@ -2,9 +2,10 @@
 Estimates API Routes: Upload, Process, Review, Override, and Export.
 """
 
+import logging
 import uuid
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from sqlalchemy.orm import Session
 
 from api.database import get_db
@@ -20,6 +21,8 @@ from api.services.exporter import EstimateExporterService
 from api.services.ingestion import IngestionService
 from data.synthetic_generator import SyntheticBidPackageGenerator
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/v1/estimates", tags=["Estimates"])
 
 ingestion_svc = IngestionService()
@@ -27,33 +30,62 @@ estimator_svc = EstimatorService()
 exporter_svc = EstimateExporterService()
 synthetic_gen = SyntheticBidPackageGenerator()
 
+# Per-file cap for uploaded documents. This bounds what the app will buffer and hand to
+# the parsers; a reverse proxy in front of the API should cap the request body as well.
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+
+
+async def _read_limited(upload: UploadFile, label: str) -> bytes:
+    """Read an upload, rejecting anything over MAX_UPLOAD_BYTES with 413."""
+    data = await upload.read(MAX_UPLOAD_BYTES + 1)
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"{label} exceeds the {MAX_UPLOAD_BYTES // (1024 * 1024)} MB upload limit.",
+        )
+    return data
+
 
 @router.post("/upload", response_model=EstimateDetailResponse)
 async def upload_bid_package(
-    project_name: str = Form(...),
-    location_region: str = Form("Default Region"),
+    project_name: str = Form(..., min_length=1, max_length=255),
+    location_region: str = Form("Default Region", max_length=100),
     boq_file: UploadFile = File(..., description="Bill of Quantities CSV or Excel file"),
     spec_file: UploadFile | None = File(None, description="Optional Spec PDF or TXT file"),
     db: Session = Depends(get_db),
 ):
     """Upload and process a bid package (BOQ + Spec document)."""
     # 1. Parse BOQ
-    boq_bytes = await boq_file.read()
+    boq_bytes = await _read_limited(boq_file, "BOQ file")
     try:
         line_items = ingestion_svc.parse_boq(boq_bytes, boq_file.filename or "boq.csv")
+    except ValueError as e:
+        # Our own validation messages (e.g. unsupported extension) are safe to relay.
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to parse BOQ file: {e}") from e
+        # Parser internals (pandas/openpyxl tracebacks) stay in the server log; the
+        # client gets a generic message rather than implementation details.
+        logger.warning("BOQ parsing failed for %r: %s", boq_file.filename, e)
+        raise HTTPException(
+            status_code=400, detail="Failed to parse BOQ file. Ensure it is a valid CSV or Excel."
+        ) from e
+
+    if not line_items:
+        raise HTTPException(
+            status_code=400,
+            detail="BOQ file contained no valid line items (rows need an item code, a positive quantity, and a positive unit price).",
+        )
 
     # 2. Parse Spec if provided
     spec_chunks: list[str] = []
     if spec_file is not None:
-        spec_bytes = await spec_file.read()
+        spec_bytes = await _read_limited(spec_file, "Spec file")
         try:
             spec_chunks = ingestion_svc.parse_spec_document(
                 spec_bytes, spec_file.filename or "spec.pdf"
             )
         except Exception as e:
-            print(f"Warning: Spec parsing fallback: {e}")
+            logger.warning("Spec parsing fallback for %r: %s", spec_file.filename, e)
 
     # 3. Create Estimate record
     estimate_id = f"EST-{uuid.uuid4().hex[:8].upper()}"
@@ -88,9 +120,11 @@ async def upload_bid_package(
 
 @router.post("/synthetic", response_model=EstimateDetailResponse)
 def create_synthetic_estimate(
-    project_name: str = "US-101 Highway Realignment & Drainage Demo",
-    region: str = "District 1 (Northwest)",
-    item_count: int = 8,
+    project_name: str = Query("US-101 Highway Realignment & Drainage Demo", max_length=255),
+    region: str = Query("District 1 (Northwest)", max_length=100),
+    # Bounded to the synthetic catalog size; out-of-range values previously crashed
+    # random.sample with a 500.
+    item_count: int = Query(8, ge=1, le=12),
     db: Session = Depends(get_db),
 ):
     """Instant demo endpoint: Generates a realistic synthetic bid package and processes it."""

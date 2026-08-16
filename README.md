@@ -121,5 +121,36 @@ bidforge/
 
 ---
 
+## Security posture
+
+**v1 ships no authentication.** Every API endpoint is unauthenticated, including the
+write paths (`POST /upload`, `PATCH .../line-items/...`, `POST .../approve`) and the
+export endpoints. Multi-tenant auth is deferred to v2 by design, which has one hard
+consequence: **do not expose this deployment to the open internet with real bid data in
+it.** Anyone who can reach the API can read, alter, and approve every estimate. For the
+public demo, run it with synthetic data only, or put it behind an authenticating proxy.
+
+What v1 *does* defend against:
+
+| Control | Where |
+|---|---|
+| Spreadsheet formula injection (`=`, `+`, `-`, `@` cells) neutralized on export | `api/services/exporter.py` |
+| Upload size capped at 10 MB per file, rejected with `413` before parsing | `api/routes/estimates.py` |
+| Parser exceptions logged server-side, generic message returned to the client | `api/routes/estimates.py` |
+| CORS restricted to `ALLOWED_ORIGINS`; never falls back to `*` | `api/main.py`, `api/config.py` |
+| Request inputs bounded (lengths, `item_count`, finite non-negative prices) | `api/routes/estimates.py`, `api/schemas.py` |
+| Containers run as an unprivileged user with `no-new-privileges` | `infra/Dockerfile.*`, `infra/docker-compose.yml` |
+| Postgres and MLflow bound to loopback, not published to the network | `infra/docker-compose.yml` |
+| `POSTGRES_PASSWORD` required — no default credential | `infra/docker-compose.yml` |
+| Secrets, `.git`, and local state excluded from image builds | `.dockerignore` |
+
+Queries go through the SQLAlchemy ORM with bound parameters throughout, so there is no
+string-built SQL.
+
+Before deploying publicly, add: authentication and per-user authorization, rate
+limiting, a request-body cap at the reverse proxy, and TLS termination.
+
+---
+
 ## License
 MIT License

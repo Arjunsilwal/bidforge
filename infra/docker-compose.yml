@@ -1,4 +1,8 @@
-version: '3.8'
+## BidForge local stack.
+##
+## POSTGRES_PASSWORD is required and has no default on purpose: a hardcoded fallback
+## password is a real credential once someone exposes the port or reuses the compose
+## file beyond their laptop. Copy .env.example to .env and set it before `up`.
 
 services:
   postgres:
@@ -7,10 +11,12 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-bidforge}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bidforge_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-bidforge_db}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      # Bound to loopback: the database is reachable from this machine for psql//inspection,
+      # but is not published on the host's external interfaces.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -24,7 +30,9 @@ services:
     container_name: bidforge-mlflow
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      # MLflow's server ships no authentication, so it stays on loopback rather than
+      # being published to the network.
+      - "127.0.0.1:5000:5000"
     command: mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow/artifacts --host 0.0.0.0 --port 5000
     volumes:
       - mlflow_data:/mlflow
@@ -38,17 +46,20 @@ services:
     ports:
       - "${API_PORT:-8000}:8000"
     environment:
-      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-bidforge}:${POSTGRES_PASSWORD:-bidforge_password}@postgres:5432/${POSTGRES_DB:-bidforge_db}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-bidforge}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-bidforge_db}
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - FRED_API_KEY=${FRED_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8501}
     depends_on:
       postgres:
         condition: service_healthy
       mlflow:
         condition: service_started
-    volumes:
-      - ..:/app
+    # No source bind-mount: the container runs the code baked into the image. Mounting
+    # the repo would also expose .git and .env to the container and shadow the build.
+    security_opt:
+      - no-new-privileges:true
 
   web:
     build:
@@ -62,8 +73,8 @@ services:
       - API_URL=http://api:8000
     depends_on:
       - api
-    volumes:
-      - ..:/app
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   postgres_data:

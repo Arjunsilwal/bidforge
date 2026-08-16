@@ -175,7 +175,9 @@ if selected_id:
             with btn_col1:
                 if est["status"] != "approved":
                     if st.button("✅ Approve Estimate", type="primary"):
-                        requests.post(f"{API_URL}/api/v1/estimates/{selected_id}/approve")
+                        requests.post(
+                            f"{API_URL}/api/v1/estimates/{selected_id}/approve", timeout=10
+                        )
                         st.rerun()
             with btn_col2:
                 csv_url = f"{API_URL}/api/v1/estimates/{selected_id}/export/csv"
@@ -219,6 +221,7 @@ if selected_id:
                             requests.patch(
                                 f"{API_URL}/api/v1/estimates/{selected_id}/line-items/{item['id']}",
                                 json={"overridden_unit_price": new_price},
+                                timeout=10,
                             )
                             st.success("Price updated!")
                             st.rerun()

@@ -13,10 +13,14 @@ class Settings(BaseSettings):
     APP_NAME: str = "BidForge"
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
-    SECRET_KEY: str = "default-insecure-secret-key-change-in-prod"
+    # NOTE: v1 intentionally ships no authentication (deferred to v2 per the plan), so
+    # there is no SECRET_KEY here. A signing key with an insecure default would imply a
+    # protection the app does not actually provide. Reintroduce it with the auth layer.
 
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
+    # Browser origins permitted by CORS. Empty means "no cross-origin browser access",
+    # which is the safe default — this is never widened to "*".
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8501,http://localhost:8000"
 
     DATABASE_URL: str = "sqlite:///./bidforge.db"  # Default local fallback; overrides with PostgreSQL in docker/prod

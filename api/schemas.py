@@ -4,7 +4,7 @@ Pydantic API Request and Response Schemas.
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ComparableBidSchema(BaseModel):
@@ -36,8 +36,16 @@ class LineItemResponse(BaseModel):
 
 
 class LineItemOverrideRequest(BaseModel):
+    # Bounded and finite: pydantic accepts JSON `Infinity`/`NaN` for floats by default,
+    # and either would propagate through the extended cost into the estimate totals and
+    # the exported workbook.
+    model_config = ConfigDict(allow_inf_nan=False)
+
     overridden_unit_price: float = Field(
-        ..., gt=0, description="New manual unit price to assign to the line item"
+        ...,
+        gt=0,
+        le=1_000_000_000,
+        description="New manual unit price to assign to the line item",
     )
 
 
