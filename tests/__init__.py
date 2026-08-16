@@ -1,0 +1,3 @@
+"""
+BidForge Test Suite.
+"""

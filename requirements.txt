@@ -1,0 +1,43 @@
+# Core & Framework
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.1
+requests>=2.31.0
+
+# Database & Vector Search
+sqlalchemy>=2.0.28
+psycopg2-binary>=2.9.9
+pgvector>=0.2.5
+alembic>=1.13.1
+
+# Machine Learning & Data Science
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn>=1.4.0
+xgboost>=2.0.3
+lightgbm>=4.3.0
+sentence-transformers>=2.5.0
+openpyxl>=3.1.2
+
+# Document & PDF Parsing
+pdfplumber>=0.10.4
+pypdf>=4.1.0
+
+# MLOps & Experiment Tracking
+mlflow>=2.11.0
+
+# LLM (Optional / Narrative Fallback)
+anthropic>=0.19.0
+
+# Frontend (Review Workspace)
+streamlit>=1.32.0
+
+# Testing & Code Quality
+pytest>=8.1.0
+pytest-asyncio>=0.23.5
+httpx>=0.27.0
+ruff>=0.3.0
+mypy>=1.9.0
+pre-commit>=3.6.2
