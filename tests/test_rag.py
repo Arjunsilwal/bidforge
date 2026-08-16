@@ -1,9 +1,11 @@
 """
 Unit tests for RAG Grounding Service (spec matching & comparable bid lookup).
 """
+
 from datetime import date
-from data.schemas import CanonicalLineItem, HistoricalBidItem
+
 from api.services.rag import RAGGroundingService
+from data.schemas import CanonicalLineItem, HistoricalBidItem
 
 
 def test_rag_spec_matching():

@@ -1,6 +1,6 @@
 # BidForge v1 Completion Checklist
 
-This document tracks the deliverables, technical verification, and readiness of **BidForge v1** against the master plan specification ([`BidForge_v1_Plan.md`](file:///Users/arjunsilwal/Desktop/bidforge/BidForge_v1_Plan.md)).
+This document tracks the deliverables, technical verification, and readiness of **BidForge v1** against the master plan specification ([`BidForge_v1_Plan.md`](./BidForge_v1_Plan.md)).
 
 ---
 
@@ -8,20 +8,20 @@ This document tracks the deliverables, technical verification, and readiness of 
 
 | Area | Plan Deliverable | Status | Implementation File(s) |
 |---|---|---|---|
-| **Scaffolding & Environment** | Virtualenv, dependencies, gitignore, Makefile, CI | ✅ Complete | [`.gitignore`](file:///Users/arjunsilwal/Desktop/bidforge/.gitignore), [`Makefile`](file:///Users/arjunsilwal/Desktop/bidforge/Makefile), [`pyproject.toml`](file:///Users/arjunsilwal/Desktop/bidforge/pyproject.toml), [`.github/workflows/ci.yml`](file:///Users/arjunsilwal/Desktop/bidforge/.github/workflows/ci.yml) |
-| **Ingestion Engine** | Parse spec PDF & BOQ (CSV/Excel) into canonical schema | ✅ Complete | [`data/schemas.py`](file:///Users/arjunsilwal/Desktop/bidforge/data/schemas.py), [`data/dot_parser.py`](file:///Users/arjunsilwal/Desktop/bidforge/data/dot_parser.py), [`api/services/ingestion.py`](file:///Users/arjunsilwal/Desktop/bidforge/api/services/ingestion.py) |
-| **Synthetic Generator** | Generate labeled test spec PDFs and BOQs | ✅ Complete | [`data/synthetic_generator.py`](file:///Users/arjunsilwal/Desktop/bidforge/data/synthetic_generator.py) |
-| **Market Price Adjustment** | FRED Construction Materials PPI ratio converter | ✅ Complete | [`data/fred_client.py`](file:///Users/arjunsilwal/Desktop/bidforge/data/fred_client.py) |
-| **Baseline Benchmarks** | Baseline A (Historical Mean) & Baseline B (Median) | ✅ Complete | [`ml/baselines.py`](file:///Users/arjunsilwal/Desktop/bidforge/ml/baselines.py) |
-| **Quantile Cost Model** | 10th (Low), 50th (Avg), 90th (High) quantile regressors | ✅ Complete | [`ml/features.py`](file:///Users/arjunsilwal/Desktop/bidforge/ml/features.py), [`ml/train.py`](file:///Users/arjunsilwal/Desktop/bidforge/ml/train.py) |
-| **Temporal Evaluation** | MAE, MAPE, 10-90% interval coverage vs. baselines | ✅ Complete | [`ml/evaluate.py`](file:///Users/arjunsilwal/Desktop/bidforge/ml/evaluate.py) |
-| **Retrieval & Grounding (RAG)** | Spec chunk semantic matching & comparable bid lookup | ✅ Complete | [`api/services/rag.py`](file:///Users/arjunsilwal/Desktop/bidforge/api/services/rag.py) |
-| **API Backend** | FastAPI async endpoints, SQLAlchemy ORM, SQLite/Postgres | ✅ Complete | [`api/main.py`](file:///Users/arjunsilwal/Desktop/bidforge/api/main.py), [`api/routes/estimates.py`](file:///Users/arjunsilwal/Desktop/bidforge/api/routes/estimates.py), [`api/models.py`](file:///Users/arjunsilwal/Desktop/bidforge/api/models.py) |
-| **Review Workspace UI** | Streamlit review UI, overrides, price bands, exports | ✅ Complete | [`web/app.py`](file:///Users/arjunsilwal/Desktop/bidforge/web/app.py) |
-| **Export Service** | Formatted client-ready CSV and Excel workbooks | ✅ Complete | [`api/services/exporter.py`](file:///Users/arjunsilwal/Desktop/bidforge/api/services/exporter.py) |
-| **MLOps & Input Drift** | MLflow tracking & real-time KS distribution drift check | ✅ Complete | [`ml/registry.py`](file:///Users/arjunsilwal/Desktop/bidforge/ml/registry.py), [`ml/drift.py`](file:///Users/arjunsilwal/Desktop/bidforge/ml/drift.py) |
-| **Containerization** | Dockerfiles for API and Web, docker-compose orchestration | ✅ Complete | [`infra/Dockerfile.api`](file:///Users/arjunsilwal/Desktop/bidforge/infra/Dockerfile.api), [`infra/Dockerfile.web`](file:///Users/arjunsilwal/Desktop/bidforge/infra/Dockerfile.web), [`infra/docker-compose.yml`](file:///Users/arjunsilwal/Desktop/bidforge/infra/docker-compose.yml) |
-| **Test Suite** | Comprehensive pytest suite (16 tests across all layers) | ✅ Complete (16/16 passing) | [`tests/`](file:///Users/arjunsilwal/Desktop/bidforge/tests) |
+| **Scaffolding & Environment** | Virtualenv, dependencies, gitignore, Makefile, CI | ✅ Complete | [`.gitignore`](./.gitignore), [`Makefile`](./Makefile), [`pyproject.toml`](./pyproject.toml), [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) |
+| **Ingestion Engine** | Parse spec PDF & BOQ (CSV/Excel) into canonical schema | ✅ Complete | [`data/schemas.py`](./data/schemas.py), [`data/dot_parser.py`](./data/dot_parser.py), [`api/services/ingestion.py`](./api/services/ingestion.py) |
+| **Synthetic Generator** | Generate labeled test spec PDFs and BOQs | ✅ Complete | [`data/synthetic_generator.py`](./data/synthetic_generator.py) |
+| **Market Price Adjustment** | FRED Construction Materials PPI ratio converter | ✅ Complete | [`data/fred_client.py`](./data/fred_client.py) |
+| **Baseline Benchmarks** | Baseline A (Historical Mean) & Baseline B (Median) | ✅ Complete | [`ml/baselines.py`](./ml/baselines.py) |
+| **Quantile Cost Model** | 10th (Low), 50th (Avg), 90th (High) quantile regressors | ✅ Complete | [`ml/features.py`](./ml/features.py), [`ml/train.py`](./ml/train.py) |
+| **Temporal Evaluation** | MAE, MAPE, 10-90% interval coverage vs. baselines | ✅ Complete | [`ml/evaluate.py`](./ml/evaluate.py) |
+| **Retrieval & Grounding (RAG)** | Spec chunk semantic matching & comparable bid lookup | ✅ Complete | [`api/services/rag.py`](./api/services/rag.py) |
+| **API Backend** | FastAPI async endpoints, SQLAlchemy ORM, SQLite/Postgres | ✅ Complete | [`api/main.py`](./api/main.py), [`api/routes/estimates.py`](./api/routes/estimates.py), [`api/models.py`](./api/models.py) |
+| **Review Workspace UI** | Streamlit review UI, overrides, price bands, exports | ✅ Complete | [`web/app.py`](./web/app.py) |
+| **Export Service** | Formatted client-ready CSV and Excel workbooks | ✅ Complete | [`api/services/exporter.py`](./api/services/exporter.py) |
+| **MLOps & Input Drift** | MLflow tracking & real-time KS distribution drift check | ✅ Complete | [`ml/registry.py`](./ml/registry.py), [`ml/drift.py`](./ml/drift.py) |
+| **Containerization** | Dockerfiles for API and Web, docker-compose orchestration | ✅ Complete | [`infra/Dockerfile.api`](./infra/Dockerfile.api), [`infra/Dockerfile.web`](./infra/Dockerfile.web), [`infra/docker-compose.yml`](./infra/docker-compose.yml) |
+| **Test Suite** | Comprehensive pytest suite (16 tests across all layers) | ✅ Complete (16/16 passing) | [`tests/`](./tests) |
 
 ---
 
@@ -32,9 +32,9 @@ This document tracks the deliverables, technical verification, and readiness of 
 - [x] **3. Baseline comparison framework**: Evaluator tracks MAE and MAPE against Historical Mean & Median.
 - [x] **4. Measured, calibrated price ranges**: 10th, 50th, and 90th percentile pinball loss gradient boosting.
 - [x] **5. Grounding and traceability**: Every line item links to matching spec section and comparable historical bids.
-- [x] **6. Automated CI**: GitHub Actions runs ruff formatting check, mypy typechecking, and pytest on push.
+- [x] **6. Automated CI**: GitHub Actions runs `ruff check`, `ruff format --check`, `mypy`, and `pytest` on every push and pull request, across Python 3.11 and 3.12.
 - [x] **7. Input-drift monitoring**: KS-test on item quantities and unseen item code detector on incoming batches.
-- [x] **8. Architecture & Model Documentation**: [`docs/architecture.md`](file:///Users/arjunsilwal/Desktop/bidforge/docs/architecture.md) & [`docs/model_card.md`](file:///Users/arjunsilwal/Desktop/bidforge/docs/model_card.md).
+- [x] **8. Architecture & Model Documentation**: [`docs/architecture.md`](./docs/architecture.md) & [`docs/model_card.md`](./docs/model_card.md).
 - [ ] **9. Public URL Deployment**: Pending cloud host selection (Render, Fly.io, Railway, or VPS).
 
 ---

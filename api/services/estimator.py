@@ -2,14 +2,16 @@
 Estimate Assembler & Prediction Service.
 Runs trained Quantile Cost Models and synthesizes defensible line justifications.
 """
-from typing import List, Optional
+
 import os
+
 import pandas as pd
-from data.schemas import CanonicalLineItem
-from ml.train import QuantileCostModelTrainer
+
 from api.models import EstimateModel, LineItemModel
 from api.services.rag import RAGGroundingService
 from data.fred_client import FredPriceIndexClient
+from data.schemas import CanonicalLineItem
+from ml.train import QuantileCostModelTrainer
 
 
 class EstimatorService:
@@ -19,7 +21,7 @@ class EstimatorService:
         self.models_dir = models_dir
         self.fred_client = FredPriceIndexClient()
         self.rag_service = RAGGroundingService()
-        self.model_trainer: Optional[QuantileCostModelTrainer] = None
+        self.model_trainer: QuantileCostModelTrainer | None = None
 
         if os.path.exists(os.path.join(models_dir, "feature_pipeline.joblib")):
             try:
@@ -30,9 +32,9 @@ class EstimatorService:
     def generate_estimate(
         self,
         estimate: EstimateModel,
-        line_items: List[CanonicalLineItem],
-        spec_chunks: List[str],
-    ) -> List[LineItemModel]:
+        line_items: list[CanonicalLineItem],
+        spec_chunks: list[str],
+    ) -> list[LineItemModel]:
         """Predict unit price ranges, assemble justifications, and attach line items to estimate."""
         df = pd.DataFrame([item.model_dump() for item in line_items])
         df["region"] = estimate.location_region
@@ -47,7 +49,7 @@ class EstimatorService:
         else:
             pred_df = self._fallback_predictions(df)
 
-        db_items: List[LineItemModel] = []
+        db_items: list[LineItemModel] = []
         tot_low = 0.0
         tot_exp = 0.0
         tot_high = 0.0
@@ -108,4 +110,6 @@ class EstimatorService:
             avgs.append(round(base_price, 2))
             highs.append(round(base_price * 1.25, 2))
 
-        return pd.DataFrame({"pred_low": lows, "pred_avg": avgs, "pred_high": highs}, index=df.index)
+        return pd.DataFrame(
+            {"pred_low": lows, "pred_avg": avgs, "pred_high": highs}, index=df.index
+        )

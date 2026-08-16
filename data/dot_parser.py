@@ -2,10 +2,11 @@
 State DOT Bid Tabulation Parser & Canonicalizer.
 Parses public letting spreadsheets/CSV files (e.g. Oregon DOT) into canonical structures.
 """
-from datetime import datetime
+
 from pathlib import Path
-from typing import List, Union
+
 import pandas as pd
+
 from data.schemas import HistoricalBidItem
 
 
@@ -28,7 +29,7 @@ class DOTBidTabParser:
     def __init__(self, target_state: str = "OR"):
         self.target_state = target_state
 
-    def parse_file(self, file_path: Union[str, Path]) -> pd.DataFrame:
+    def parse_file(self, file_path: str | Path) -> pd.DataFrame:
         """Read CSV or Excel DOT bid tabulation and standardize column names."""
         path = Path(file_path)
         if path.suffix.lower() in [".xls", ".xlsx"]:
@@ -66,7 +67,9 @@ class DOTBidTabParser:
         if "unit_price" in df.columns:
             df["unit_price"] = pd.to_numeric(df["unit_price"], errors="coerce")
         if "bidder_rank" in df.columns:
-            df["bidder_rank"] = pd.to_numeric(df["bidder_rank"], errors="coerce").fillna(1).astype(int)
+            df["bidder_rank"] = (
+                pd.to_numeric(df["bidder_rank"], errors="coerce").fillna(1).astype(int)
+            )
         else:
             df["bidder_rank"] = 1
 
@@ -93,7 +96,7 @@ class DOTBidTabParser:
         df = df[(df["quantity"] > 0) & (df["unit_price"] > 0)]
         return df
 
-    def to_historical_items(self, df: pd.DataFrame) -> List[HistoricalBidItem]:
+    def to_historical_items(self, df: pd.DataFrame) -> list[HistoricalBidItem]:
         """Convert cleaned DataFrame to list of Pydantic HistoricalBidItem models."""
         items = []
         for _, row in df.iterrows():

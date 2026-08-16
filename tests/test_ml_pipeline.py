@@ -1,21 +1,25 @@
 """
 Unit tests for Machine Learning Feature Pipeline, Quantile Training, and Evaluation.
 """
+
 import numpy as np
 import pandas as pd
+
+from ml.evaluate import CostModelEvaluator
 from ml.features import CostFeaturePipeline
 from ml.train import QuantileCostModelTrainer
-from ml.evaluate import CostModelEvaluator
 
 
 def test_feature_pipeline():
-    train_data = pd.DataFrame({
-        "quantity": [10.0, 100.0, 1000.0],
-        "market_index_value": [300.0, 310.0, 320.0],
-        "item_code": ["02010", "02020", "02010"],
-        "unit_of_measure": ["LS", "CY", "LS"],
-        "region": ["D1", "D2", "D1"],
-    })
+    train_data = pd.DataFrame(
+        {
+            "quantity": [10.0, 100.0, 1000.0],
+            "market_index_value": [300.0, 310.0, 320.0],
+            "item_code": ["02010", "02020", "02010"],
+            "unit_of_measure": ["LS", "CY", "LS"],
+            "region": ["D1", "D2", "D1"],
+        }
+    )
     y = pd.Series([1000.0, 45.0, 950.0])
 
     pipeline = CostFeaturePipeline()
@@ -28,25 +32,29 @@ def test_feature_pipeline():
 
 
 def test_quantile_cost_model_training_and_monotonicity():
-    train_data = pd.DataFrame({
-        "quantity": [5.0, 20.0, 50.0, 100.0, 500.0, 1000.0] * 3,
-        "market_index_value": [300.0] * 18,
-        "item_code": ["02010", "02020", "03010"] * 6,
-        "unit_of_measure": ["LS", "CY", "TON"] * 6,
-        "region": ["D1", "D2", "D1"] * 6,
-        "unit_price": [5000.0, 40.0, 25.0, 4800.0, 35.0, 22.0] * 3,
-    })
+    train_data = pd.DataFrame(
+        {
+            "quantity": [5.0, 20.0, 50.0, 100.0, 500.0, 1000.0] * 3,
+            "market_index_value": [300.0] * 18,
+            "item_code": ["02010", "02020", "03010"] * 6,
+            "unit_of_measure": ["LS", "CY", "TON"] * 6,
+            "region": ["D1", "D2", "D1"] * 6,
+            "unit_price": [5000.0, 40.0, 25.0, 4800.0, 35.0, 22.0] * 3,
+        }
+    )
 
     trainer = QuantileCostModelTrainer(n_estimators=20, max_depth=3)
     trainer.fit(train_data)
 
-    test_data = pd.DataFrame({
-        "quantity": [15.0, 200.0],
-        "market_index_value": [300.0, 300.0],
-        "item_code": ["02010", "03010"],
-        "unit_of_measure": ["LS", "TON"],
-        "region": ["D1", "D1"],
-    })
+    test_data = pd.DataFrame(
+        {
+            "quantity": [15.0, 200.0],
+            "market_index_value": [300.0, 300.0],
+            "item_code": ["02010", "03010"],
+            "unit_of_measure": ["LS", "TON"],
+            "region": ["D1", "D1"],
+        }
+    )
 
     preds = trainer.predict_ranges(test_data)
     assert "pred_low" in preds.columns

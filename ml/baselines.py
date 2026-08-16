@@ -3,7 +3,7 @@ Naive Heuristic Baselines for Cost Estimation.
 Baseline A: Historical index-adjusted mean unit price per item code.
 Baseline B: Historical median unit price per item code.
 """
-from typing import Dict
+
 import pandas as pd
 
 
@@ -11,7 +11,7 @@ class HistoricalMeanBaseline:
     """Baseline A: Historical Mean unit price grouped by item code."""
 
     def __init__(self):
-        self.item_means: Dict[str, float] = {}
+        self.item_means: dict[str, float] = {}
         self.global_mean: float = 0.0
 
     def fit(self, df: pd.DataFrame, target_col: str = "unit_price") -> "HistoricalMeanBaseline":
@@ -30,7 +30,7 @@ class HistoricalMedianBaseline:
     """Baseline B: Historical Median unit price grouped by item code."""
 
     def __init__(self):
-        self.item_medians: Dict[str, float] = {}
+        self.item_medians: dict[str, float] = {}
         self.global_median: float = 0.0
 
     def fit(self, df: pd.DataFrame, target_col: str = "unit_price") -> "HistoricalMedianBaseline":
@@ -42,4 +42,6 @@ class HistoricalMedianBaseline:
 
     def predict(self, df: pd.DataFrame) -> pd.Series:
         """Predict median unit price for each item code, falling back to global median."""
-        return df["item_code"].map(lambda code: self.item_medians.get(str(code), self.global_median))
+        return df["item_code"].map(
+            lambda code: self.item_medians.get(str(code), self.global_median)
+        )

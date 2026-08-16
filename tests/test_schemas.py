@@ -1,9 +1,8 @@
 """
 Tests for canonical data schemas and synthetic generator.
 """
-from datetime import date
-import pytest
-from data.schemas import CanonicalLineItem, BidPackage
+
+from data.schemas import CanonicalLineItem
 from data.synthetic_generator import SyntheticBidPackageGenerator
 
 

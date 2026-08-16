@@ -1,7 +1,9 @@
 """
 Tests for Baseline A and Baseline B cost models.
 """
+
 import pandas as pd
+
 from ml.baselines import HistoricalMeanBaseline, HistoricalMedianBaseline
 
 

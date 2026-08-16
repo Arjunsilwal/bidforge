@@ -3,7 +3,7 @@ Feature Engineering Pipeline for Construction Cost Prediction.
 Extracts tabular numerical features, categorical target encodings,
 and semantic text embeddings for line item descriptions.
 """
-from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -25,10 +25,10 @@ class CostFeaturePipeline(BaseEstimator, TransformerMixin):
         self.scaler = StandardScaler()
         self.encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
         self.fitted_ = False
-        self.item_code_means_: Dict[str, float] = {}
+        self.item_code_means_: dict[str, float] = {}
         self.global_mean_: float = 0.0
 
-    def fit(self, df: pd.DataFrame, y: Optional[pd.Series] = None) -> "CostFeaturePipeline":
+    def fit(self, df: pd.DataFrame, y: pd.Series | None = None) -> "CostFeaturePipeline":
         """Fit encoders and target mean statistics on training data."""
         # Calculate target mean per item code for target encoding
         if y is not None and "item_code" in df.columns:
@@ -60,7 +60,11 @@ class CostFeaturePipeline(BaseEstimator, TransformerMixin):
 
         # 3. Item code target encoding feature
         if "item_code" in df.columns:
-            item_encoded = df["item_code"].map(lambda c: self.item_code_means_.get(str(c), self.global_mean_)).values.reshape(-1, 1)
+            item_encoded = (
+                df["item_code"]
+                .map(lambda c: self.item_code_means_.get(str(c), self.global_mean_))
+                .values.reshape(-1, 1)
+            )
             # Log transform the price target encoding
             item_encoded_log = np.log1p(np.maximum(item_encoded, 0.0))
             feature_blocks.append(item_encoded_log)
@@ -75,7 +79,7 @@ class CostFeaturePipeline(BaseEstimator, TransformerMixin):
         X = np.hstack(feature_blocks)
         return X
 
-    def _get_cat_cols(self, df: pd.DataFrame) -> List[str]:
+    def _get_cat_cols(self, df: pd.DataFrame) -> list[str]:
         """Find categorical columns present in DataFrame."""
         possible = ["unit_of_measure", "region"]
         return [c for c in possible if c in df.columns]

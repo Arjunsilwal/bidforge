@@ -3,10 +3,12 @@ BidForge v1 Review Workspace (Streamlit).
 Allows estimators to upload bid packages, inspect calibrated price distributions,
 view RAG spec grounding & historical comparable bids, override line item prices, and export to Excel/CSV.
 """
+
 import os
+
+import pandas as pd
 import requests
 import streamlit as st
-import pandas as pd
 
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
@@ -53,14 +55,23 @@ st.caption("AI Preconstruction Estimating Engine • Quantile Cost Models • Hi
 with st.sidebar:
     st.header("Project Management")
 
-    mode = st.radio("Actions", ["📂 Active Estimates", "⚡ Instant Demo Package", "📤 Upload New Package"])
+    mode = st.radio(
+        "Actions", ["📂 Active Estimates", "⚡ Instant Demo Package", "📤 Upload New Package"]
+    )
 
     if mode == "⚡ Instant Demo Package":
         st.subheader("Generate Demo")
-        demo_name = st.text_input("Project Name", value="US-101 Highway Realignment & Drainage Upgrade")
+        demo_name = st.text_input(
+            "Project Name", value="US-101 Highway Realignment & Drainage Upgrade"
+        )
         demo_region = st.selectbox(
             "Region",
-            ["District 1 (Northwest)", "District 2 (Central)", "District 3 (Southwest)", "District 4 (Eastern)"],
+            [
+                "District 1 (Northwest)",
+                "District 2 (Central)",
+                "District 3 (Southwest)",
+                "District 4 (Eastern)",
+            ],
         )
         item_count = st.slider("Number of Line Items", min_value=4, max_value=12, value=8)
 
@@ -69,7 +80,11 @@ with st.sidebar:
                 try:
                     resp = requests.post(
                         f"{API_URL}/api/v1/estimates/synthetic",
-                        params={"project_name": demo_name, "region": demo_region, "item_count": item_count},
+                        params={
+                            "project_name": demo_name,
+                            "region": demo_region,
+                            "item_count": item_count,
+                        },
                         timeout=15,
                     )
                     if resp.status_code == 200:
@@ -90,12 +105,20 @@ with st.sidebar:
         if st.button("Upload & Estimate", type="primary", disabled=boq_file is None):
             with st.spinner("Parsing specifications and computing unit price distributions..."):
                 try:
-                    files = {"boq_file": (boq_file.name, boq_file.getvalue(), "application/octet-stream")}
+                    files = {
+                        "boq_file": (boq_file.name, boq_file.getvalue(), "application/octet-stream")
+                    }
                     if spec_file:
-                        files["spec_file"] = (spec_file.name, spec_file.getvalue(), "application/octet-stream")
+                        files["spec_file"] = (
+                            spec_file.name,
+                            spec_file.getvalue(),
+                            "application/octet-stream",
+                        )
                     data = {"project_name": up_name, "location_region": up_region}
 
-                    resp = requests.post(f"{API_URL}/api/v1/estimates/upload", data=data, files=files, timeout=30)
+                    resp = requests.post(
+                        f"{API_URL}/api/v1/estimates/upload", data=data, files=files, timeout=30
+                    )
                     if resp.status_code == 200:
                         st.success("Package estimated successfully!")
                         st.session_state["selected_estimate_id"] = resp.json()["id"]
@@ -119,7 +142,11 @@ if estimates_list:
     chosen_label = st.selectbox(
         "Select Estimate to Review:",
         options=list(est_options.keys()),
-        index=0 if not selected_id else [i for i, k in enumerate(est_options.values()) if k == selected_id][0] if selected_id in est_options.values() else 0,
+        index=0
+        if not selected_id
+        else [i for i, k in enumerate(est_options.values()) if k == selected_id][0]
+        if selected_id in est_options.values()
+        else 0,
     )
     selected_id = est_options[chosen_label]
 
@@ -165,7 +192,9 @@ if selected_id:
                 ):
                     c1, c2, c3 = st.columns([2, 1, 1])
                     with c1:
-                        st.markdown(f"**Matched Spec Section:** `{item['matched_spec_section'] or 'General Standard Spec'}`")
+                        st.markdown(
+                            f"**Matched Spec Section:** `{item['matched_spec_section'] or 'General Standard Spec'}`"
+                        )
                         st.markdown(f"**Model Justification:** {item['justification_text']}")
                         if item.get("comparable_bids"):
                             st.caption("🔍 Comparable Historical DOT Bids:")
@@ -197,4 +226,6 @@ if selected_id:
     except Exception as e:
         st.error(f"Could not load estimate details: {e}")
 else:
-    st.info("👋 No estimates found yet. Use the sidebar to generate an instant demo package or upload a custom BOQ.")
+    st.info(
+        "👋 No estimates found yet. Use the sidebar to generate an instant demo package or upload a custom BOQ."
+    )

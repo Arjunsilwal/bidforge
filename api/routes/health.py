@@ -1,7 +1,9 @@
 """
 Health Check and System Status Route.
 """
+
 from fastapi import APIRouter
+
 from api.config import settings
 
 router = APIRouter(tags=["Health"])

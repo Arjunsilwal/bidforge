@@ -4,19 +4,20 @@ Finds:
 1. Matching spec sections for each line item.
 2. Comparable historical bids for grounding and defense.
 """
-from typing import List, Dict, Any, Optional
+
 import difflib
-from data.schemas import CanonicalLineItem, HistoricalBidItem
+
 from api.schemas import ComparableBidSchema
+from data.schemas import CanonicalLineItem, HistoricalBidItem
 
 
 class RAGGroundingService:
     """Provides semantic grounding by matching line items against spec chunks and historical bid logs."""
 
-    def __init__(self, historical_bids: Optional[List[HistoricalBidItem]] = None):
+    def __init__(self, historical_bids: list[HistoricalBidItem] | None = None):
         self.historical_bids = historical_bids or []
 
-    def match_spec_section(self, item: CanonicalLineItem, spec_chunks: List[str]) -> Optional[str]:
+    def match_spec_section(self, item: CanonicalLineItem, spec_chunks: list[str]) -> str | None:
         """Find the most relevant specification section text for a given line item."""
         if not spec_chunks:
             return None
@@ -44,7 +45,9 @@ class RAGGroundingService:
             return lines[0] if lines else best_chunk[:100]
         return None
 
-    def find_comparable_bids(self, item: CanonicalLineItem, top_k: int = 3) -> List[ComparableBidSchema]:
+    def find_comparable_bids(
+        self, item: CanonicalLineItem, top_k: int = 3
+    ) -> list[ComparableBidSchema]:
         """Look up comparable historical bids for the given item code and quantity range."""
         if not self.historical_bids:
             # Generate representative comparable bids for demo/mock grounding if dataset is empty
@@ -66,7 +69,9 @@ class RAGGroundingService:
             # Fallback to description similarity
             matching = sorted(
                 self.historical_bids,
-                key=lambda b: difflib.SequenceMatcher(None, item.item_description, b.item_description).ratio(),
+                key=lambda b: difflib.SequenceMatcher(
+                    None, item.item_description, b.item_description
+                ).ratio(),
                 reverse=True,
             )
 

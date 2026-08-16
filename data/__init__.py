@@ -1,9 +1,10 @@
 """
 BidForge Data Pipeline & Canonical Schemas.
 """
-from data.schemas import CanonicalLineItem, BidPackage, HistoricalBidItem
+
 from data.dot_parser import DOTBidTabParser
 from data.fred_client import FredPriceIndexClient
+from data.schemas import BidPackage, CanonicalLineItem, HistoricalBidItem
 from data.synthetic_generator import SyntheticBidPackageGenerator
 
 __all__ = [

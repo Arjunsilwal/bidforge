@@ -1,12 +1,13 @@
 """
 API Configuration and Settings Management.
 """
-from typing import List
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment or defaults."""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     APP_NAME: str = "BidForge"
@@ -18,7 +19,7 @@ class Settings(BaseSettings):
     API_PORT: int = 8000
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8501,http://localhost:8000"
 
-    DATABASE_URL: str = "sqlite:///./bidforge.db" # Default local fallback; overrides with PostgreSQL in docker/prod
+    DATABASE_URL: str = "sqlite:///./bidforge.db"  # Default local fallback; overrides with PostgreSQL in docker/prod
 
     FRED_API_KEY: str = ""
     FRED_SERIES_ID: str = "WPUSI012011"
@@ -31,7 +32,7 @@ class Settings(BaseSettings):
     DATA_PROCESSED_DIR: str = "./data/processed"
 
     @property
-    def cors_origins(self) -> List[str]:
+    def cors_origins(self) -> list[str]:
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",") if origin.strip()]
 
 

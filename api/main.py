@@ -1,13 +1,16 @@
 """
 BidForge FastAPI Application Entrypoint.
 """
+
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from api.config import settings
 from api.database import Base, engine
-from api.routes.health import router as health_router
 from api.routes.estimates import router as estimates_router
+from api.routes.health import router as health_router
 
 
 @asynccontextmanager

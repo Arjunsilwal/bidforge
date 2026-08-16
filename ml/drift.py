@@ -3,8 +3,9 @@ Input Feature Drift Detector.
 Computes statistical distance between incoming inference requests and training distributions
 (e.g., Kolmogorov-Smirnov test for continuous features, PSI or Chi-square for categoricals).
 """
-from typing import Dict, Any, List
-import numpy as np
+
+from typing import Any
+
 import pandas as pd
 from scipy.stats import ks_2samp
 
@@ -14,20 +15,23 @@ class InputDriftDetector:
 
     def __init__(self, baseline_df: pd.DataFrame, significance_level: float = 0.05):
         self.baseline_quantities = baseline_df.get("quantity", pd.Series([1.0])).dropna().values
-        self.baseline_item_codes = set(baseline_df.get("item_code", pd.Series([])).astype(str).unique())
+        self.baseline_item_codes = set(
+            baseline_df.get("item_code", pd.Series([])).astype(str).unique()
+        )
         self.significance_level = significance_level
 
-    def check_drift(self, incoming_df: pd.DataFrame) -> Dict[str, Any]:
+    def check_drift(self, incoming_df: pd.DataFrame) -> dict[str, Any]:
         """
         Evaluate drift on incoming batch:
         - Quantity distribution KS-test
         - Out-of-vocabulary item codes percentage
         """
-        drift_report = {
+        warnings: list[str] = []
+        drift_report: dict[str, Any] = {
             "drift_detected": False,
             "quantity_ks_pvalue": 1.0,
             "novel_item_code_pct": 0.0,
-            "warnings": [],
+            "warnings": warnings,
         }
 
         # 1. Check quantity distribution drift via KS-test
@@ -38,7 +42,7 @@ class InputDriftDetector:
                 drift_report["quantity_ks_pvalue"] = float(p_val)
                 if p_val < self.significance_level:
                     drift_report["drift_detected"] = True
-                    drift_report["warnings"].append(
+                    warnings.append(
                         f"Quantity distribution drift detected (KS p-value: {p_val:.4f} < {self.significance_level})"
                     )
 
@@ -50,7 +54,7 @@ class InputDriftDetector:
             drift_report["novel_item_code_pct"] = round(novel_pct, 2)
             if novel_pct > 30.0:
                 drift_report["drift_detected"] = True
-                drift_report["warnings"].append(
+                warnings.append(
                     f"High percentage of novel item codes ({novel_pct:.1f}% unseen in training baseline)"
                 )
 

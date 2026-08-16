@@ -1,9 +1,12 @@
 """
 SQLAlchemy Database Engine and Session Dependency.
 """
-from typing import Generator
+
+from collections.abc import Generator
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+
 from api.config import settings
 
 # Handle SQLite connect_args if using local fallback
@@ -16,7 +19,15 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+
+
+class Base(DeclarativeBase):
+    """Declarative base for all ORM models.
+
+    Uses the SQLAlchemy 2.0 `DeclarativeBase` + `Mapped[...]` style so attribute
+    access on an instance is typed as the Python value (`str`, `float`, ...) rather
+    than `Column[...]`.
+    """
 
 
 def get_db() -> Generator[Session, None, None]:

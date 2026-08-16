@@ -2,11 +2,12 @@
 FRED (Federal Reserve Economic Data) API Client.
 Fetches Producer Price Index for Construction Materials (WPUSI012011) to normalize historical prices.
 """
-from datetime import date
-from typing import Dict, Optional
+
 import os
-import requests
+from datetime import date
+
 import pandas as pd
+import requests
 
 
 class FredPriceIndexClient:
@@ -14,10 +15,10 @@ class FredPriceIndexClient:
 
     DEFAULT_SERIES_ID = "WPUSI012011"  # PPI: Construction Materials
 
-    def __init__(self, api_key: Optional[str] = None, series_id: str = DEFAULT_SERIES_ID):
+    def __init__(self, api_key: str | None = None, series_id: str = DEFAULT_SERIES_ID):
         self.api_key = api_key or os.getenv("FRED_API_KEY", "")
         self.series_id = series_id
-        self.cache: Dict[str, float] = {}
+        self.cache: dict[str, float] = {}
 
     def fetch_series(self, start_date: str = "2015-01-01") -> pd.DataFrame:
         """Fetch monthly PPI series from FRED API or provide fallback values."""
@@ -66,7 +67,7 @@ class FredPriceIndexClient:
         self,
         historical_price: float,
         historical_date: date,
-        target_date: Optional[date] = None,
+        target_date: date | None = None,
     ) -> float:
         """
         Adjust a historical price to target date dollars using the PPI ratio:

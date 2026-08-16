@@ -6,9 +6,10 @@ Evaluates cost models on a temporal holdout dataset, calculating:
 - Prediction Interval Coverage Probability (PICP) for 10-90% range
 - Direct tabular comparison against Baselines A and B
 """
-from typing import Dict, Any
+
 import numpy as np
 import pandas as pd
+
 from ml.baselines import HistoricalMeanBaseline, HistoricalMedianBaseline
 from ml.train import QuantileCostModelTrainer
 
@@ -30,7 +31,9 @@ class CostModelEvaluator:
         return float(np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100.0)
 
     @staticmethod
-    def calculate_interval_coverage(y_true: np.ndarray, y_low: np.ndarray, y_high: np.ndarray) -> float:
+    def calculate_interval_coverage(
+        y_true: np.ndarray, y_low: np.ndarray, y_high: np.ndarray
+    ) -> float:
         """Calculate percentage of true prices that fall within the [y_low, y_high] range."""
         within_bounds = (y_true >= y_low) & (y_true <= y_high)
         return float(np.mean(within_bounds) * 100.0)

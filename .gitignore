@@ -109,12 +109,13 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-.venv/
-venv/
+# Glob the suffixed forms too (.venv312, venv-3.11, ...). ruff and pytest honour
+# .gitignore, so an unlisted venv directory gets scanned as if it were source.
+.venv*/
+venv*/
 ENV/
 env/
 env.bak/
-venv.bak/
 .uv/
 
 # ==============================================================================

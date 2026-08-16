@@ -1,21 +1,23 @@
 """
 Estimates API Routes: Upload, Process, Review, Override, and Export.
 """
+
 import uuid
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Response
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from sqlalchemy.orm import Session
+
 from api.database import get_db
 from api.models import EstimateModel, LineItemModel, SpecChunkModel
 from api.schemas import (
-    EstimateSummaryResponse,
     EstimateDetailResponse,
-    LineItemResponse,
+    EstimateSummaryResponse,
     LineItemOverrideRequest,
+    LineItemResponse,
 )
-from api.services.ingestion import IngestionService
 from api.services.estimator import EstimatorService
 from api.services.exporter import EstimateExporterService
+from api.services.ingestion import IngestionService
 from data.synthetic_generator import SyntheticBidPackageGenerator
 
 router = APIRouter(prefix="/api/v1/estimates", tags=["Estimates"])
@@ -31,7 +33,7 @@ async def upload_bid_package(
     project_name: str = Form(...),
     location_region: str = Form("Default Region"),
     boq_file: UploadFile = File(..., description="Bill of Quantities CSV or Excel file"),
-    spec_file: Optional[UploadFile] = File(None, description="Optional Spec PDF or TXT file"),
+    spec_file: UploadFile | None = File(None, description="Optional Spec PDF or TXT file"),
     db: Session = Depends(get_db),
 ):
     """Upload and process a bid package (BOQ + Spec document)."""
@@ -40,14 +42,16 @@ async def upload_bid_package(
     try:
         line_items = ingestion_svc.parse_boq(boq_bytes, boq_file.filename or "boq.csv")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to parse BOQ file: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Failed to parse BOQ file: {e}") from e
 
     # 2. Parse Spec if provided
-    spec_chunks: List[str] = []
+    spec_chunks: list[str] = []
     if spec_file is not None:
         spec_bytes = await spec_file.read()
         try:
-            spec_chunks = ingestion_svc.parse_spec_document(spec_bytes, spec_file.filename or "spec.pdf")
+            spec_chunks = ingestion_svc.parse_spec_document(
+                spec_bytes, spec_file.filename or "spec.pdf"
+            )
         except Exception as e:
             print(f"Warning: Spec parsing fallback: {e}")
 
@@ -108,7 +112,11 @@ def create_synthetic_estimate(
 
     # Save synthetic spec chunks
     for chunk in pkg.spec_chunks:
-        db.add(SpecChunkModel(id=f"CHK-{uuid.uuid4().hex[:8].upper()}", estimate_id=estimate.id, chunk_text=chunk))
+        db.add(
+            SpecChunkModel(
+                id=f"CHK-{uuid.uuid4().hex[:8].upper()}", estimate_id=estimate.id, chunk_text=chunk
+            )
+        )
 
     # Generate predictions
     db_items = estimator_svc.generate_estimate(estimate, pkg.line_items, pkg.spec_chunks)
@@ -120,7 +128,7 @@ def create_synthetic_estimate(
     return _build_detail_response(estimate)
 
 
-@router.get("", response_model=List[EstimateSummaryResponse])
+@router.get("", response_model=list[EstimateSummaryResponse])
 def list_estimates(db: Session = Depends(get_db)):
     """List all created estimates."""
     estimates = db.query(EstimateModel).order_by(EstimateModel.created_at.desc()).all()
@@ -158,10 +166,14 @@ def override_line_item_price(
     db: Session = Depends(get_db),
 ):
     """Human-in-the-loop: Override unit price for an individual line item."""
-    item = db.query(LineItemModel).filter(
-        LineItemModel.id == item_id,
-        LineItemModel.estimate_id == estimate_id,
-    ).first()
+    item = (
+        db.query(LineItemModel)
+        .filter(
+            LineItemModel.id == item_id,
+            LineItemModel.estimate_id == estimate_id,
+        )
+        .first()
+    )
     if not item:
         raise HTTPException(status_code=404, detail="Line item not found")
 
@@ -171,10 +183,7 @@ def override_line_item_price(
 
     # Recalculate estimate total
     estimate = item.estimate
-    total_exp = sum(
-        (it.overridden_unit_price if it.is_overridden else it.unit_price_expected) * it.quantity
-        for it in estimate.line_items
-    )
+    total_exp = sum(it.effective_unit_price * it.quantity for it in estimate.line_items)
     estimate.total_cost_expected = round(total_exp, 2)
 
     db.commit()
@@ -245,7 +254,7 @@ def _build_detail_response(estimate: EstimateModel) -> EstimateDetailResponse:
             unit_of_measure=it.unit_of_measure,
             quantity=it.quantity,
             unit_price_low=it.unit_price_low,
-            unit_price_expected=it.overridden_unit_price if it.is_overridden else it.unit_price_expected,
+            unit_price_expected=it.effective_unit_price,
             unit_price_high=it.unit_price_high,
             extended_cost=it.extended_cost,
             is_overridden=it.is_overridden,

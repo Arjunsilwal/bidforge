@@ -1,13 +1,15 @@
 """
 Pydantic API Request and Response Schemas.
 """
+
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+
 from pydantic import BaseModel, Field
 
 
 class ComparableBidSchema(BaseModel):
     """Comparable historical bid item summary."""
+
     contract_id: str
     letting_date: str
     region: str
@@ -27,14 +29,16 @@ class LineItemResponse(BaseModel):
     unit_price_high: float
     extended_cost: float
     is_overridden: bool = False
-    overridden_unit_price: Optional[float] = None
-    matched_spec_section: Optional[str] = None
-    justification_text: Optional[str] = None
-    comparable_bids: List[ComparableBidSchema] = Field(default_factory=list)
+    overridden_unit_price: float | None = None
+    matched_spec_section: str | None = None
+    justification_text: str | None = None
+    comparable_bids: list[ComparableBidSchema] = Field(default_factory=list)
 
 
 class LineItemOverrideRequest(BaseModel):
-    overridden_unit_price: float = Field(..., gt=0, description="New manual unit price to assign to the line item")
+    overridden_unit_price: float = Field(
+        ..., gt=0, description="New manual unit price to assign to the line item"
+    )
 
 
 class EstimateSummaryResponse(BaseModel):
@@ -51,7 +55,7 @@ class EstimateSummaryResponse(BaseModel):
 
 
 class EstimateDetailResponse(EstimateSummaryResponse):
-    line_items: List[LineItemResponse]
+    line_items: list[LineItemResponse]
 
 
 class EstimateCreateRequest(BaseModel):

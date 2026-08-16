@@ -2,8 +2,8 @@
 
 > **AI Preconstruction Estimating Engine** — Turning bid packages (specifications + bill of quantities) into defensible, traceable draft estimates with calibrated cost distributions and historical grounding.
 
-[![CI](https://github.com/your-username/bidforge/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/bidforge/actions)
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/Arjunsilwal/bidforge/actions/workflows/ci.yml/badge.svg)](https://github.com/Arjunsilwal/bidforge/actions/workflows/ci.yml)
+[![Python 3.11 | 3.12](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-green.svg)](https://fastapi.tiangolo.com)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 
@@ -55,13 +55,13 @@ Upload Spec (PDF) + Bill of Quantities (CSV/Excel)
 ## Quickstart
 
 ### Prerequisites
-- Python 3.12+ (or Docker & Docker Compose)
+- Python 3.11+ (CI covers 3.11 and 3.12), or Docker & Docker Compose
 - PostgreSQL with `pgvector` extension (optional if using SQLite for local tests)
 
 ### 1. Setup Local Environment
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/bidforge.git
+git clone https://github.com/Arjunsilwal/bidforge.git
 cd bidforge
 
 # Create environment and install dependencies

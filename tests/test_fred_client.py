@@ -1,7 +1,9 @@
 """
 Unit tests for FRED Price Index Client.
 """
+
 from datetime import date
+
 from data.fred_client import FredPriceIndexClient
 
 
