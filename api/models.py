@@ -1,7 +1,7 @@
 """
 SQLAlchemy ORM Models for Estimates, Line Items, Historical Bids, and Spec Chunks.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Column,
     String,
@@ -17,6 +17,10 @@ from sqlalchemy.orm import relationship
 from api.database import Base
 
 
+def utc_now():
+    return datetime.now(timezone.utc)
+
+
 class EstimateModel(Base):
     """Represents a full bid package estimate project."""
     __tablename__ = "estimates"
@@ -28,8 +32,8 @@ class EstimateModel(Base):
     total_cost_low = Column(Float, default=0.0)
     total_cost_expected = Column(Float, default=0.0)
     total_cost_high = Column(Float, default=0.0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     # Relationships
     line_items = relationship("LineItemModel", back_populates="estimate", cascade="all, delete-orphan")
@@ -73,6 +77,6 @@ class SpecChunkModel(Base):
     estimate_id = Column(String(64), ForeignKey("estimates.id"), nullable=False, index=True)
     section_title = Column(String(255), nullable=True)
     chunk_text = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     estimate = relationship("EstimateModel", back_populates="spec_chunks")

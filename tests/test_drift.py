@@ -8,14 +8,14 @@ from ml.drift import InputDriftDetector
 def test_drift_detector():
     baseline_data = pd.DataFrame({
         "quantity": [10.0, 20.0, 30.0, 40.0, 50.0],
-        "item_code": ["02010", "02020", "02030"],
+        "item_code": ["02010", "02020", "02030", "02010", "02020"],
     })
     detector = InputDriftDetector(baseline_data)
 
     # Similar incoming data
     similar_data = pd.DataFrame({
         "quantity": [15.0, 25.0, 35.0],
-        "item_code": ["02010", "02020"],
+        "item_code": ["02010", "02020", "02030"],
     })
     report = detector.check_drift(similar_data)
     assert not report["drift_detected"]

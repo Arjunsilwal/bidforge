@@ -3,6 +3,10 @@ Tests for FastAPI endpoints.
 """
 from fastapi.testclient import TestClient
 from api.main import app
+from api.database import Base, engine
+
+# Ensure tables are initialized for testing
+Base.metadata.create_all(bind=engine)
 
 client = TestClient(app)
 
