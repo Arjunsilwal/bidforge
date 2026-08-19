@@ -11,16 +11,18 @@
 
 ## Overview
 
-BidForge v1 ingests a bid package consisting of:
-1. **Scope/Spec PDF document** (parsed into searchable semantic chunks)
-2. **Bill of Quantities (BOQ)** in CSV or Excel format
+BidForge v1 turns a complex preconstruction bid package into a structured, defensible draft estimate in seconds.
 
-It produces a structured draft estimate where every predicted line item includes:
-- **Calibrated Unit Price Range**: Low (10th percentile), Expected/Average (50th percentile), and High (90th percentile)
-- **Extended Cost**: Computed using predicted price and project quantity
-- **Historical Grounding**: Traceable links to comparable state DOT historical bids
-- **Spec Section Reference**: Semantic retrieval connecting the line item to the exact spec clause
-- **Human-in-the-Loop Review Workspace**: Interactive UI to inspect, override, approve, and export to Excel/CSV
+### Inputs
+1. **Scope/Spec Document** (PDF or Text) — parsed into semantic chunks
+2. **Bill of Quantities (BOQ)** (CSV or Excel) — parsed into a canonical line-item schema
+
+### Outputs
+- **Calibrated Unit Price Bands**: 10th percentile (Low), 50th percentile (Expected/Average), and 90th percentile (High)
+- **Extended Cost Calculations**: Computed per line item and aggregated for project totals
+- **Historical Grounding (RAG)**: Traceable links to comparable state DOT historical letting bids
+- **Spec Grounding (RAG)**: Semantic matching to the exact specification clauses and divisions
+- **Review Workspace UI**: Human-in-the-loop workspace to inspect, override unit prices, approve estimates, and export directly to client-ready Excel and CSV formats
 
 ---
 
@@ -28,43 +30,53 @@ It produces a structured draft estimate where every predicted line item includes
 
 ```
 Upload Spec (PDF) + Bill of Quantities (CSV/Excel)
-                     |
-                     v
+                     │
+                     ▼
            Ingestion Service
  (PDF text chunking + canonical line item parsing)
-                     |
-                     v
+                     │
+                     ▼
         Quantile Cost Predictor (ML)
  (XGBoost / LightGBM 10th, 50th, 90th percentiles)
-                     |
-                     v
+                     │
+                     ▼
              Retrieval (RAG)
 (Comparable historical bids + relevant spec sections)
-                     |
-                     v
+                     │
+                     ▼
             Estimate Assembler
   (Structured draft estimate + line justifications)
-                     |
-                     v
+                     │
+                     ▼
        Review Workspace & Export UI
    (Human review, price override, Excel export)
 ```
 
 ---
 
+## Documentation
+
+- [Architecture & System Flow](docs/architecture.md) — Detailed technical specifications, data pipelines, and database design
+- [Model Card](docs/model_card.md) — Features, baselines comparison (Mean vs. Median), metrics, and limitations
+- [Architecture Decision Records (ADRs)](docs/decisions.md) — Technical tradeoffs and decisions log
+- [v1 Completion Checklist](docs/V1_COMPLETION_CHECKLIST.md) — Deliverables matrix, Definition of Done status, and roadmap
+- [Master v1 Plan](BidForge_v1_Plan.md) — Original scope contract and multi-phase build plan
+
+---
+
 ## Quickstart
 
 ### Prerequisites
-- Python 3.11+ (CI covers 3.11 and 3.12), or Docker & Docker Compose
-- PostgreSQL with `pgvector` extension (optional if using SQLite for local tests)
+- Python 3.11+ (CI validates against Python 3.11 and 3.12)
+- Docker & Docker Compose (optional for containerized execution)
 
 ### 1. Setup Local Environment
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/Arjunsilwal/bidforge.git
 cd bidforge
 
-# Create environment and install dependencies
+# Create virtual environment and install dependencies
 make setup
 source .venv/bin/activate
 
@@ -82,11 +94,28 @@ make docker-up
 
 ### 3. Run Locally (Without Docker)
 ```bash
-# Terminal 1: Run FastAPI backend
+# Terminal 1: Launch FastAPI backend
 make run-api
 
-# Terminal 2: Run Streamlit review workspace
+# Terminal 2: Launch Streamlit review workspace
 make run-web
+```
+
+---
+
+## Testing & Quality
+
+Run the complete test suite (16 tests covering schemas, ML baselines, RAG retrieval, drift detection, and API endpoints):
+
+```bash
+# Run pytest test suite
+make test
+
+# Run linter and formatter checks
+make lint
+
+# Run static type checking
+make typecheck
 ```
 
 ---
@@ -95,16 +124,19 @@ make run-web
 
 ```
 bidforge/
-├── data/              # Ingestion, canonical schemas, FRED client, synthetic data generator
+├── api/               # FastAPI application, routes, ORM models, schemas, and RAG services
+│   ├── routes/        # Estimate upload, review, override, and export endpoints
+│   └── services/      # Ingestion, RAG grounding, estimator, and exporter
+├── data/              # Canonical schemas, DOT bid tab parser, FRED client, synthetic generator
+├── docs/              # Architecture diagrams, model cards, ADRs, and v1 completion checklist
+├── infra/             # Dockerfiles, docker-compose.yml, and deployment configurations
 ├── ml/                # Feature engineering, quantile cost models, baselines, MLflow, drift
-├── api/               # FastAPI backend app, routes, models, schemas, and RAG services
-├── web/               # Review workspace UI (Streamlit / React)
-├── infra/             # Dockerfiles, docker-compose.yml, CI configs
 ├── notebooks/         # Exploratory data analysis & model experiments
-├── tests/             # Pytest test suite for schemas, ML baselines, API, and drift
-├── docs/              # Architecture diagrams, model cards, ADRs
+├── tests/             # Pytest test suite (16 unit & integration tests)
+├── web/               # Streamlit review workspace UI
+├── .github/workflows/ # GitHub Actions CI matrix (Python 3.11, 3.12)
 ├── BidForge_v1_Plan.md# Complete v1 master project specification
-├── Makefile           # One-command setup, test, train, run, and deploy scripts
+├── Makefile           # One-command CLI (setup, test, train, run, and docker-up)
 ├── pyproject.toml     # Project metadata and tooling configurations
 ├── requirements.txt   # Locked Python package dependencies
 └── README.md
@@ -114,41 +146,24 @@ bidforge/
 
 ## MLOps & Rigor
 
-- **Strict Temporal Holdout**: Models are evaluated only on future lettings to avoid lookahead bias.
-- **Quantile Calibration**: Empirically measured 10-90% prediction intervals.
-- **Baselines Comparison**: Evaluated against historical mean and median unit price baselines.
-- **Input Drift Detection**: Continuous distribution checks on incoming inference items against training baselines.
+- **Strict Temporal Holdout**: Models are evaluated strictly on future lettings to eliminate lookahead bias.
+- **Quantile Calibration**: Empirically measured 10th-90th prediction intervals.
+- **Baselines Comparison**: Evaluated against historical mean and median unit price benchmarks.
+- **Input Drift Detection**: Continuous distribution checks (Kolmogorov-Smirnov test and novel item code tracking) on inference batches against training baselines.
+- **FRED Macroeconomic Deflator**: Normalizes historical prices to present-day dollars using the FRED Construction Materials PPI (`WPUSI012011`).
 
 ---
 
-## Security posture
+## Security Posture
 
-**v1 ships no authentication.** Every API endpoint is unauthenticated, including the
-write paths (`POST /upload`, `PATCH .../line-items/...`, `POST .../approve`) and the
-export endpoints. Multi-tenant auth is deferred to v2 by design, which has one hard
-consequence: **do not expose this deployment to the open internet with real bid data in
-it.** Anyone who can reach the API can read, alter, and approve every estimate. For the
-public demo, run it with synthetic data only, or put it behind an authenticating proxy.
+**v1 ships no multi-tenant authentication** (deferred to v2 by design). For public demo deployments, use synthetic data or place behind an authenticating reverse proxy.
 
-What v1 *does* defend against:
-
-| Control | Where |
-|---|---|
-| Spreadsheet formula injection (`=`, `+`, `-`, `@` cells) neutralized on export | `api/services/exporter.py` |
-| Upload size capped at 10 MB per file, rejected with `413` before parsing | `api/routes/estimates.py` |
-| Parser exceptions logged server-side, generic message returned to the client | `api/routes/estimates.py` |
-| CORS restricted to `ALLOWED_ORIGINS`; never falls back to `*` | `api/main.py`, `api/config.py` |
-| Request inputs bounded (lengths, `item_count`, finite non-negative prices) | `api/routes/estimates.py`, `api/schemas.py` |
-| Containers run as an unprivileged user with `no-new-privileges` | `infra/Dockerfile.*`, `infra/docker-compose.yml` |
-| Postgres and MLflow bound to loopback, not published to the network | `infra/docker-compose.yml` |
-| `POSTGRES_PASSWORD` required — no default credential | `infra/docker-compose.yml` |
-| Secrets, `.git`, and local state excluded from image builds | `.dockerignore` |
-
-Queries go through the SQLAlchemy ORM with bound parameters throughout, so there is no
-string-built SQL.
-
-Before deploying publicly, add: authentication and per-user authorization, rate
-limiting, a request-body cap at the reverse proxy, and TLS termination.
+What v1 implements:
+- **Spreadsheet Formula Injection Defense**: Neutralizes `=, +, -, @` prefix characters upon Excel/CSV export (`api/services/exporter.py`).
+- **File Upload Limits**: Capped at 10 MB per file, returning `413 Payload Too Large` before parsing.
+- **CORS Allowlist**: Restricted explicitly to `ALLOWED_ORIGINS` from environment settings.
+- **Bound Parameter ORM Queries**: All database operations use SQLAlchemy ORM parameter binding to prevent SQL injection.
+- **Unprivileged Containers**: Non-root container user execution in Dockerfiles.
 
 ---
 
